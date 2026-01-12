@@ -115,6 +115,16 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    void Waiting()
+    {
+        
+    }
+
+    void Attack()
+    {
+
+    }
+
     bool RandomSearchPoint(Vector3 center, float radius, out Vector3 point)
     {
         Vector3 randomPoint = center + Random.insideUnitSphere * radius;
@@ -183,6 +193,11 @@ public class Enemy : MonoBehaviour
         float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
         float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
 
+        if(_player.position == _playerLastKnownPosition)
+        {
+            return true;
+        }
+
         if(distanceToPlayer > _detectionRange)
         {
             return false;
@@ -192,6 +207,22 @@ public class Enemy : MonoBehaviour
         {
             return false;
         }
+
+        RaycastHit hit;
+        if(Physics.Raycast(transform.position, directionToPlayer, out hit, distanceToPlayer))
+        {
+            if(hit.collider.CompareTag("Player"))
+            {
+                _playerLastKnownPosition = _player.position;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        
         return true;
     }
 }
