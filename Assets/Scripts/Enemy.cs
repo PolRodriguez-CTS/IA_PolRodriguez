@@ -11,7 +11,11 @@ public class Enemy : MonoBehaviour
 
         Chasing,
 
-        Searching
+        Searching,
+
+        Waiting,
+
+        Attacking
     }
 
     public EnemyState currentState;
@@ -20,6 +24,7 @@ public class Enemy : MonoBehaviour
 
     //cosas patrullar
     [SerializeField] private Transform[] _patrolPoints;
+    int patrolIndex;
 
     //cosas detección
     [SerializeField] private float _detectionRange = 7;
@@ -29,6 +34,10 @@ public class Enemy : MonoBehaviour
     private float _searchTimer;
     [SerializeField] private float _searchWaitTIme = 15;
     [SerializeField] private float _searchRadius = 10;
+
+    //cosas de esperar
+    private float _waitTimer;
+    [SerializeField] private float _waitTime = 5;
 
     
 
@@ -41,11 +50,14 @@ public class Enemy : MonoBehaviour
     void Start()
     {
         currentState = EnemyState.Patrolling;
-        SetRandomPatrolPoint();
+        //SetRandomPatrolPoint();
+        patrolIndex = -1;
+
     }
 
     void Update()
     {
+        //Debug.Log(patrolIndex);
         switch(currentState)
         {
             case EnemyState.Patrolling:
@@ -57,6 +69,12 @@ public class Enemy : MonoBehaviour
             case EnemyState.Searching:
                 Search();
             break;
+            case EnemyState.Waiting:
+                Wait();
+            break;
+            case EnemyState.Attacking:
+                Attack();
+            break;
             default:
                 Patrol();
             break;
@@ -65,6 +83,7 @@ public class Enemy : MonoBehaviour
 
     void Patrol()
     {
+        int maxIndex = _patrolPoints.Length -1;
         if(OnRange())
         {
             currentState = EnemyState.Chasing;
@@ -72,7 +91,17 @@ public class Enemy : MonoBehaviour
 
         if(_enemyAgent.remainingDistance < 0.5f)
         {
-            SetRandomPatrolPoint();
+            patrolIndex++;
+            Debug.Log(patrolIndex);
+            SetPatrolPoint();
+            Wait();
+            
+            //SetRandomPatrolPoint();
+        }
+        
+        if(patrolIndex >= maxIndex)
+        {
+            patrolIndex = -1;
         }
     }
 
@@ -115,14 +144,26 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void Waiting()
+    void Wait()
     {
-        
+        currentState = EnemyState.Waiting;
+
+        _waitTimer += Time.deltaTime;
+
+        if(_waitTimer < _waitTime)
+        {
+            Debug.Log("esperando");
+        }
+        else
+        {
+            _waitTimer = 0;
+            currentState = EnemyState.Patrolling;
+        }
     }
 
     void Attack()
     {
-
+        currentState = EnemyState.Attacking;
     }
 
     bool RandomSearchPoint(Vector3 center, float radius, out Vector3 point)
@@ -145,6 +186,11 @@ public class Enemy : MonoBehaviour
     void SetRandomPatrolPoint()
     {
         _enemyAgent.SetDestination(_patrolPoints[Random.Range(0, _patrolPoints.Length)].position);
+    }
+
+    void SetPatrolPoint()
+    {
+        _enemyAgent.SetDestination(_patrolPoints[patrolIndex].position);
     }
 
     void OnDrawGizmos()
