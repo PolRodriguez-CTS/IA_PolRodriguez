@@ -39,6 +39,10 @@ public class Enemy : MonoBehaviour
     private float _waitTimer;
     [SerializeField] private float _waitTime = 5;
 
+    //cosas de atacat
+    private float _attackCooldown;
+    [SerializeField] private float _attackTime = 5;
+
     
 
     void Awake()
@@ -83,6 +87,7 @@ public class Enemy : MonoBehaviour
 
     void Patrol()
     {
+        Debug.Log("Patrullando");
         int maxIndex = _patrolPoints.Length -1;
         if(OnRange())
         {
@@ -94,7 +99,7 @@ public class Enemy : MonoBehaviour
             patrolIndex++;
             Debug.Log(patrolIndex);
             SetPatrolPoint();
-            Wait();
+            currentState = EnemyState.Waiting;
             
             //SetRandomPatrolPoint();
         }
@@ -107,6 +112,8 @@ public class Enemy : MonoBehaviour
 
     void Chase()
     {
+        Debug.Log("Persiguiendo");
+
         if(!OnRange())
         {
             currentState = EnemyState.Searching;
@@ -115,10 +122,17 @@ public class Enemy : MonoBehaviour
         _enemyAgent.SetDestination(_player.position);
 
         _playerLastKnownPosition = _player.position;
+
+        if(_enemyAgent.remainingDistance < 0.5f)
+        {
+            _attackCooldown = 0;
+            currentState = EnemyState.Attacking;
+        }
     }
 
     void Search()
     {
+        Debug.Log("Buscando");
         if(OnRange())
         {
             currentState = EnemyState.Chasing;
@@ -146,8 +160,6 @@ public class Enemy : MonoBehaviour
 
     void Wait()
     {
-        currentState = EnemyState.Waiting;
-
         _waitTimer += Time.deltaTime;
 
         if(_waitTimer < _waitTime)
@@ -163,7 +175,16 @@ public class Enemy : MonoBehaviour
 
     void Attack()
     {
-        currentState = EnemyState.Attacking;
+        _attackCooldown += Time.deltaTime;
+        if(_attackCooldown == 0)
+        {
+            Debug.Log("Ataque");
+        }
+
+        if(_attackCooldown >= _attackTime)
+        {
+            currentState = EnemyState.Chasing;
+        }        
     }
 
     bool RandomSearchPoint(Vector3 center, float radius, out Vector3 point)

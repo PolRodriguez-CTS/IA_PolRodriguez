@@ -286,6 +286,7 @@ MonoBehaviour:
   _searchWaitTIme: 15
   _searchRadius: 10
   _waitTime: 5
+  _attackTime: 5
 --- !u!195 &197082604
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -21110,7 +21111,7 @@ Transform:
   m_GameObject: {fileID: 1992186804}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.01, y: 5.505005, z: 15.44}
+  m_LocalPosition: {x: 1.950943, y: 1.5, z: -9.874836}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
