@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Enemy : MonoBehaviour
+public class EnemyStateMachine : MonoBehaviour
 {
     private NavMeshAgent _enemyAgent;
 
@@ -37,17 +37,11 @@ public class Enemy : MonoBehaviour
 
     //cosas de esperar
     private float _waitTimer;
-    [SerializeField] private float _waitTime = 3;
+    [SerializeField] private float _waitTime = 5;
 
-    //cosas de atacar
-    private float _attackTimer;
-    [SerializeField] private float _attackTime = 2;
-    [SerializeField] private float _attackRange = 1.5f;
-    
-    // Cooldown de ataque
-    private float _attackCooldownTimer;
-    [SerializeField] private float _attackCooldownTime = 3f;
-    private bool _canAttack = true;
+    //cosas de atacat
+    private float _attackCooldown;
+    [SerializeField] private float _attackTime = 5;
 
     
 
@@ -61,89 +55,77 @@ public class Enemy : MonoBehaviour
     {
         currentState = EnemyState.Patrolling;
         //SetRandomPatrolPoint();
-        patrolIndex = 0;
-        SetPatrolPoint();
+        patrolIndex = -1;
 
     }
 
     void Update()
     {
-        // Actualizar cooldown de ataque
-        if (!_canAttack)
-        {
-            _attackCooldownTimer += Time.deltaTime;
-            if (_attackCooldownTimer >= _attackCooldownTime)
-            {
-                _canAttack = true;
-                _attackCooldownTimer = 0;
-                Debug.Log("¡Cooldown terminado! Puede atacar de nuevo");
-            }
-        }
-
+        //Debug.Log(patrolIndex);
         switch(currentState)
         {
             case EnemyState.Patrolling:
                 Patrol();
-                break;
+            break;
             case EnemyState.Chasing:
                 Chase();
-                break;
+            break;
             case EnemyState.Searching:
                 Search();
-                break;
+            break;
             case EnemyState.Waiting:
                 Wait();
-                break;
+            break;
             case EnemyState.Attacking:
                 Attack();
-                break;
+            break;
             default:
                 Patrol();
-                break;
+            break;
         }
     }
 
     void Patrol()
     {
         Debug.Log("Patrullando");
+        int maxIndex = _patrolPoints.Length -1;
         if(OnRange())
         {
             currentState = EnemyState.Chasing;
-            return;
         }
 
-        if(_enemyAgent.remainingDistance <= 0.5f && !_enemyAgent.pathPending)
+        if(_enemyAgent.remainingDistance < 0.5f)
         {
-            //índice circular
-            patrolIndex = (patrolIndex + 1) % _patrolPoints.Length;
+            patrolIndex++;
             Debug.Log(patrolIndex);
             SetPatrolPoint();
             currentState = EnemyState.Waiting;
+            
             //SetRandomPatrolPoint();
+        }
+        
+        if(patrolIndex >= maxIndex)
+        {
+            patrolIndex = -1;
         }
     }
 
     void Chase()
     {
-        Debug.Log("Persiguiendo - Puede atacar: " + _canAttack);
+        Debug.Log("Persiguiendo");
 
         if(!OnRange())
         {
             currentState = EnemyState.Searching;
-            _searchTimer = 0;
-            return;
         }
 
         _enemyAgent.SetDestination(_player.position);
+
         _playerLastKnownPosition = _player.position;
 
-        // Verificar si está lo suficientemente cerca para atacar
-        float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
-        
-        // Solo puede atacar si está en rango Y tiene el cooldown terminado
-        if(distanceToPlayer <= _attackRange && _canAttack)
+        if(_enemyAgent.remainingDistance < 0.5f)
         {
-            _attackTimer = 0;
+            _attackCooldown = 0;
             currentState = EnemyState.Attacking;
         }
     }
@@ -178,14 +160,6 @@ public class Enemy : MonoBehaviour
 
     void Wait()
     {
-        if(OnRange())
-        {
-            _enemyAgent.isStopped = false;
-            currentState = EnemyState.Chasing;
-            return;
-        }
-
-        _enemyAgent.isStopped = true;
         _waitTimer += Time.deltaTime;
 
         if(_waitTimer < _waitTime)
@@ -195,35 +169,21 @@ public class Enemy : MonoBehaviour
         else
         {
             _waitTimer = 0;
-            _enemyAgent.isStopped = false;
             currentState = EnemyState.Patrolling;
         }
     }
 
     void Attack()
     {
-        if(_attackTimer == 0)
+        _attackCooldown += Time.deltaTime;
+        if(_attackCooldown == 0)
         {
-            Debug.Log("¡Ataque realizado!");
-            // Aquí iría la lógica de daño al jugador
-            // Ejemplo: player.TakeDamage(damageAmount);
+            Debug.Log("Ataque");
         }
 
-        _attackTimer += Time.deltaTime;
-
-        if(_attackTimer >= _attackTime)
+        if(_attackCooldown >= _attackTime)
         {
-            Debug.Log("Ataque completado. Activando cooldown...");
-            
-            // Activar cooldown
-            _canAttack = false;
-            _attackCooldownTimer = 0;
-            
-            // Volver a perseguir
             currentState = EnemyState.Chasing;
-            
-            // Resetear timer de ataque
-            _attackTimer = 0;
         }        
     }
 
@@ -254,12 +214,56 @@ public class Enemy : MonoBehaviour
         _enemyAgent.SetDestination(_patrolPoints[patrolIndex].position);
     }
 
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        foreach(Transform point in _patrolPoints)
+        {
+            Gizmos.DrawSphere(point.position, 0.3f);
+        }
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, _detectionRange);
+
+        Gizmos.color = Color.yellow;
+
+        Vector3 fovLine1 = Quaternion.AngleAxis(_detectionAngle * 0.5f, transform.up) * transform.forward * _detectionRange;
+        Vector3 fovLine2 = Quaternion.AngleAxis(-_detectionAngle * 0.5f, transform.up) * transform.forward * _detectionRange;
+
+        Gizmos.DrawLine(transform.position, transform.position + fovLine1);
+        Gizmos.DrawLine(transform.position, transform.position + fovLine2);
+    }
+
     bool OnRange()
     {
-        Vector3 directionToPlayer = (_player.position - transform.position).normalized;
+        //Mismo metodo, funciona?
+        /*if(Mathf.Abs(transform.position.magnitude - _player.position.magnitude) <= _detectionRange)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }*/
+        
+        //resta vector, funciona.
+        /*if(Vector3.Distance(transform.position, _player.position) < _detectionRange)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }*/
 
+        Vector3 directionToPlayer = _player.position - transform.position;
         float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
         float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
+
+        if(_player.position == _playerLastKnownPosition)
+        {
+            return true;
+        }
 
         if(distanceToPlayer > _detectionRange)
         {
@@ -279,28 +283,13 @@ public class Enemy : MonoBehaviour
                 _playerLastKnownPosition = _player.position;
                 return true;
             }
+            else
+            {
+                return false;
+            }
         }
 
-        return false;
-    }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        foreach(Transform point in _patrolPoints)
-        {
-            Gizmos.DrawSphere(point.position, 0.3f);
-        }
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, _detectionRange);
-
-        Gizmos.color = Color.yellow;
-
-        Vector3 fovLine1 = Quaternion.AngleAxis(_detectionAngle * 0.5f, transform.up) * transform.forward * _detectionRange;
-        Vector3 fovLine2 = Quaternion.AngleAxis(-_detectionAngle * 0.5f, transform.up) * transform.forward * _detectionRange;
-
-        Gizmos.DrawLine(transform.position, transform.position + fovLine1);
-        Gizmos.DrawLine(transform.position, transform.position + fovLine2);
+        
+        return true;
     }
 }
