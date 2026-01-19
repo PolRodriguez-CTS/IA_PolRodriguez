@@ -68,7 +68,6 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        // Actualizar cooldown de ataque
         if (!_canAttack)
         {
             _attackCooldownTimer += Time.deltaTime;
@@ -114,12 +113,10 @@ public class Enemy : MonoBehaviour
 
         if(_enemyAgent.remainingDistance <= 0.5f && !_enemyAgent.pathPending)
         {
-            //índice circular
             patrolIndex = (patrolIndex + 1) % _patrolPoints.Length;
             Debug.Log(patrolIndex);
             SetPatrolPoint();
             currentState = EnemyState.Waiting;
-            //SetRandomPatrolPoint();
         }
     }
 
@@ -137,10 +134,8 @@ public class Enemy : MonoBehaviour
         _enemyAgent.SetDestination(_player.position);
         _playerLastKnownPosition = _player.position;
 
-        // Verificar si está lo suficientemente cerca para atacar
         float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
         
-        // Solo puede atacar si está en rango Y tiene el cooldown terminado
         if(distanceToPlayer <= _attackRange && _canAttack)
         {
             _attackTimer = 0;
@@ -205,8 +200,6 @@ public class Enemy : MonoBehaviour
         if(_attackTimer == 0)
         {
             Debug.Log("¡Ataque realizado!");
-            // Aquí iría la lógica de daño al jugador
-            // Ejemplo: player.TakeDamage(damageAmount);
         }
 
         _attackTimer += Time.deltaTime;
@@ -215,14 +208,11 @@ public class Enemy : MonoBehaviour
         {
             Debug.Log("Ataque completado. Activando cooldown...");
             
-            // Activar cooldown
             _canAttack = false;
             _attackCooldownTimer = 0;
             
-            // Volver a perseguir
             currentState = EnemyState.Chasing;
             
-            // Resetear timer de ataque
             _attackTimer = 0;
         }        
     }
