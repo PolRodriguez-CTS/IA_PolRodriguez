@@ -75,7 +75,7 @@ public class Enemy : MonoBehaviour
             {
                 _canAttack = true;
                 _attackCooldownTimer = 0;
-                Debug.Log("¡Cooldown terminado! Puede atacar de nuevo");
+                Debug.Log("cooldown terminado");
             }
         }
 
@@ -199,14 +199,14 @@ public class Enemy : MonoBehaviour
     {
         if(_attackTimer == 0)
         {
-            Debug.Log("¡Ataque realizado!");
+            Debug.Log("Ataque");
         }
 
         _attackTimer += Time.deltaTime;
 
         if(_attackTimer >= _attackTime)
         {
-            Debug.Log("Ataque completado. Activando cooldown...");
+            Debug.Log("cooldown...");
             
             _canAttack = false;
             _attackCooldownTimer = 0;
