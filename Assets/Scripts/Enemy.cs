@@ -199,6 +199,7 @@ public class Enemy : MonoBehaviour
     {
         if(_attackTimer == 0)
         {
+            _enemyAgent.ResetPath();
             Debug.Log("Ataque");
         }
 
