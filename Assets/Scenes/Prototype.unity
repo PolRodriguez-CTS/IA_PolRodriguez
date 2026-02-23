@@ -256,6 +256,7 @@ GameObject:
   - component: {fileID: 197082605}
   - component: {fileID: 197082604}
   - component: {fileID: 197082609}
+  - component: {fileID: 197082610}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -383,7 +384,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 197082602}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9fa3333cb4bf03845ac3cf3c52b033b7, type: 3}
   m_Name: 
@@ -402,6 +403,27 @@ MonoBehaviour:
   _attackTime: 2
   _attackRange: 1.5
   _attackCooldownTime: 3
+--- !u!114 &197082610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197082602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fd1b2f0372309c44a1cb3086c854583, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 1992186808}
+  _patrolPoints:
+  - {fileID: 358879297}
+  - {fileID: 158913066}
+  - {fileID: 842633429}
+  - {fileID: 1576138196}
+  _patrolIndex: 0
+  _detectionRange: 7
+  _attackRange: 2
 --- !u!43 &232515223
 Mesh:
   m_ObjectHideFlags: 0
